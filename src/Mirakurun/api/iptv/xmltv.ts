@@ -291,6 +291,11 @@ export const get: Operation = async (req, res) => {
             x += `<episode-num>${escapeXMLSpecialChars(seriesInfo?.groups.episodeNumber)}</episode-num>\n`;
         }
         x += `<desc>${escapeXMLSpecialChars(program.description || "")}</desc>\n`;
+
+        if (program.name?.includes("🈞")) {
+            x += "<previously-shown/>";
+        }
+
         if (program.genres) {
             const genreStrings = getGenreStrings(program.genres);
             for (const genreString of genreStrings) {
