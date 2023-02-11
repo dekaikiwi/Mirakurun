@@ -281,6 +281,7 @@ export const get: Operation = async (req, res) => {
 
         const seriesInfoRegex = new RegExp("(?<seriesName>^.*)（(?<episodeNumber>[１２３４５６７８９０]+)）「(?<episodeName>.+)」");
         const seriesInfo = program.name?.match(seriesInfoRegex);
+        const peopleExtendedKey = "出演者";
 
         x += `<programme start="${getDateTime(program.startAt)}" stop="${getDateTime(program.startAt + program.duration)}" channel="${service.id}">\n`;
         x += `<title>${escapeXMLSpecialChars(seriesInfo?.groups.seriesName || program.name || "")}</title>\n`;
@@ -293,7 +294,60 @@ export const get: Operation = async (req, res) => {
         x += `<desc>${escapeXMLSpecialChars(program.description || "")}</desc>\n`;
 
         if (program.name?.includes("🈞")) {
-            x += "<previously-shown/>";
+            x += "<previously-shown/>\n";
+        }
+
+        if (program.extended && peopleExtendedKey in program.extended) {
+            const people = program?.extended[peopleExtendedKey]?.split("，");
+
+            x += "<credits>\n";
+            let tag = "guest";
+            const peopleTypeRegex = new RegExp("【(.+)】");
+            const peopleTypeTagMap = {
+                講師: "presenter",
+                声: "actor",
+                キャスター: "presenter",
+                出演: "actor",
+                語り: "presenter",
+                リポーター: "presenter",
+                旅人: "guest",
+                スポーツキャスター: "commentator",
+                気象キャスター: "presenter",
+                ナビゲーター: "presenter",
+                アナウンサー: "presenter",
+                司会: "presenter",
+                解説: "commentator",
+                女子解説: "commentator",
+                ゲスト: "guest",
+                ＭＣ: "presenter",
+                MC: "presenter",
+                番組ＭＣ: "presenter",
+                ナレーター: "presenter"
+            };
+
+            const peopleTypeIgnore = [
+                "チェンバロ",
+                "チェロ",
+                "リコーダー",
+                "ピアノ"
+            ];
+
+            for (const p of people) {
+                if (p.match(peopleTypeRegex)) {
+                    const peopleType = p.match(peopleTypeRegex)[1];
+
+                    if (peopleType in peopleTypeIgnore) { continue; }
+
+                    if (!peopleTypeTagMap[peopleType]) {
+                        console.warn(`Unknown Person Type ${peopleType}`);
+                    }
+
+                    tag = peopleTypeTagMap[peopleType] || "guest";
+                }
+
+                x += `<${tag}>${escapeXMLSpecialChars(p.replace(RegExp("【(.+)】"), ""))}</${tag}>\n`;
+            }
+            x += "</credits>\n";
         }
 
         if (program.genres) {
