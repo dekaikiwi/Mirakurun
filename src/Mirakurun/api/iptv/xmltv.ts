@@ -228,7 +228,11 @@ function getGenreStrings(genres: Program["genres"]) {
             }
         } else {
             // 標準
-            stringSet.add(`${GENRE_LV1[genre.lv1]} - ${GENRE_LV2[genre.lv1 * 0x10 + genre.lv2]}`);
+            // Set a separate tag per genre.
+            stringSet.add(GENRE_LV1[genre.lv1]);
+            stringSet.add(GENRE_LV2[genre.lv1 * 0x10 + genre.lv2]);
+            // Original code
+            // stringSet.add(`${GENRE_LV1[genre.lv1]} - ${GENRE_LV2[genre.lv1 * 0x10 + genre.lv2]}`);
         }
     }
 
