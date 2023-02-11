@@ -274,8 +274,18 @@ export const get: Operation = async (req, res) => {
         if (service === null) {
             continue;
         }
+
+        const seriesInfoRegex = new RegExp("(?<seriesName>^.*)（(?<episodeNumber>[１２３４５６７８９０]+)）「(?<episodeName>.+)」");
+        const seriesInfo = program.name?.match(seriesInfoRegex);
+
         x += `<programme start="${getDateTime(program.startAt)}" stop="${getDateTime(program.startAt + program.duration)}" channel="${service.id}">\n`;
-        x += `<title>${escapeXMLSpecialChars(program.name || "")}</title>\n`;
+        x += `<title>${escapeXMLSpecialChars(seriesInfo?.groups.seriesName || program.name || "")}</title>\n`;
+        if (seriesInfo?.groups.episodeName) {
+            x += `<sub-title>${escapeXMLSpecialChars(seriesInfo?.groups.episodeName)}</sub-title>\n`;
+        }
+        if (seriesInfo?.groups.episodeNumber) {
+            x += `<episode-num>${escapeXMLSpecialChars(seriesInfo?.groups.episodeNumber)}</episode-num>\n`;
+        }
         x += `<desc>${escapeXMLSpecialChars(program.description || "")}</desc>\n`;
         if (program.genres) {
             const genreStrings = getGenreStrings(program.genres);
