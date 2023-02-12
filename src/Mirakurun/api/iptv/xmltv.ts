@@ -279,8 +279,13 @@ export const get: Operation = async (req, res) => {
             continue;
         }
 
-        const seriesInfoRegex = new RegExp("(?<seriesName>^.*)（(?<episodeNumber>[１２３４５６７８９０]+)）「(?<episodeName>.+)」");
-        const seriesInfo = program.name?.match(seriesInfoRegex);
+        const seriesInfoRegex = new RegExp("(?<seriesName>^.*)（(?<episodeNumber>[１２３４５６７８９０]+)）(?<episodeName>.+)");
+        let seriesInfo = program.name?.match(seriesInfoRegex);
+
+        if (!seriesInfo) {
+            seriesInfo = program.name?.match(new RegExp("(?<seriesName>^.*)[「【](?<episodeName>.+)[」】]"));
+        }
+
         const peopleExtendedKey = "出演者";
 
         x += `<programme start="${getDateTime(program.startAt)}" stop="${getDateTime(program.startAt + program.duration)}" channel="${service.id}">\n`;
