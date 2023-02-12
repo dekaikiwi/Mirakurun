@@ -319,51 +319,84 @@ export const get: Operation = async (req, res) => {
             }
 
             x += "<credits>\n";
-            let tag = "guest";
             const peopleTypeRegex = new RegExp("【(.+)】");
-            const peopleTypeTagMap = {
-                講師: "presenter",
-                声: "actor",
-                キャスター: "presenter",
-                出演: "actor",
-                語り: "presenter",
-                リポーター: "presenter",
-                旅人: "guest",
-                スポーツキャスター: "commentator",
-                気象キャスター: "presenter",
-                ナビゲーター: "presenter",
-                アナウンサー: "presenter",
-                司会: "presenter",
-                解説: "commentator",
-                女子解説: "commentator",
-                ゲスト: "guest",
-                ＭＣ: "presenter",
-                MC: "presenter",
-                番組ＭＣ: "presenter",
-                ナレーター: "presenter"
+
+            const tagPeopleTypeMap = {
+                presenter: [
+                    "講師",
+                    "キャスター",
+                    "リポーター",
+                    "気象キャスター",
+                    "ナビゲーター",
+                    "アナウンサー",
+                    "司会",
+                    "ＭＣ",
+                    "MC",
+                    "番組ＭＣ",
+                    "ナレーター",
+                    "語り",
+                    "レギュラー出演者",
+                    "出演",
+                    "フィールドリポーター",
+                    "気象予報士",
+                    "メインキャスター",
+                    "進行",
+                    "お天気キャスター",
+                    "お天気",
+                    "気象予報士",
+                    "ニュース担当",
+                    "ＶＴＲゲスト",
+                    "アクティブキャスター"
+                ],
+                actor: ["声", "🈤", "VTR出演", "声の出演"],
+                guest: ["旅人", "ゲスト", "レギュラー", "女性ゲスト", "ロケゲスト"],
+                commentator: ["スポーツキャスター", "解説", "女子解説", "コメンテーター", "評論家", "総合解説"],
+                writer: [],
+                adapter: [],
+                producer: [],
+                composer: ["ＤＪ", "アンサンブル"],
+                editor: ["ＶＴＲ"],
+                director: []
             };
 
             const peopleTypeIgnore = [
                 "チェンバロ",
                 "チェロ",
                 "リコーダー",
-                "ピアノ"
+                "ピアノ",
+                ""
             ];
 
+            let peopleTypeTag = "guest";
+
             for (const p of people) {
+                // If a role descriptor is present in the person string
+                // Then update the tag. If not reuse the previous tag
+                // This is because some credit lists give the role type
+                // for a group of people instead of each person.
                 if (p.match(peopleTypeRegex)) {
+                    let peopleTypeFound = false;
                     const peopleType = p.match(peopleTypeRegex)[1];
 
-                    if (peopleType in peopleTypeIgnore) { continue; }
+                    if (peopleTypeIgnore.includes(peopleType)) { continue; }
 
-                    if (!peopleTypeTagMap[peopleType]) {
-                        console.warn(`Unknown Person Type ${peopleType}`);
+                    for (const tag in tagPeopleTypeMap) {
+                        if (tagPeopleTypeMap[tag].includes(peopleType)) {
+                            peopleTypeTag = tag;
+                            peopleTypeFound = true;
+                        }
                     }
 
-                    tag = peopleTypeTagMap[peopleType] || "guest";
+                    if (!peopleTypeFound) {
+                        console.warn(`Unknown Person Type ${peopleType}`);
+                        peopleTypeTag = "guest";
+                    }
                 }
 
-                x += `<${tag}>${escapeXMLSpecialChars(p.replace(RegExp("【(.+)】"), ""))}</${tag}>\n`;
+                if (escapeXMLSpecialChars(p.replace(RegExp("【(.+)】"), "").trim()).length) {
+                    x += `<${peopleTypeTag}>${escapeXMLSpecialChars(p.replace(RegExp("【(.+)】"), "").trim())}</${peopleTypeTag}>\n`;
+                }
+
             }
             x += "</credits>\n";
         }
