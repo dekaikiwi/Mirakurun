@@ -287,6 +287,7 @@ export const get: Operation = async (req, res) => {
         }
 
         const peopleExtendedKey = "出演者";
+        const staffExtendedKey = "スタッフ";
 
         x += `<programme start="${getDateTime(program.startAt)}" stop="${getDateTime(program.startAt + program.duration)}" channel="${service.id}">\n`;
         x += `<title>${escapeXMLSpecialChars(seriesInfo?.groups.seriesName || program.name || "")}</title>\n`;
@@ -303,7 +304,19 @@ export const get: Operation = async (req, res) => {
         }
 
         if (program.extended && peopleExtendedKey in program.extended) {
-            const people = program?.extended[peopleExtendedKey]?.split("，");
+            let people = program?.extended[peopleExtendedKey]?.split("，");
+
+            // Different Services use different delimeters for credits.
+            // If array length is one after first attempt, we probably want to
+            // try again with a different delimiter
+            if (people.length === 1) {
+                people = program?.extended[peopleExtendedKey]?.split("\r\n");
+                // In the case separator is newline, typically there is an
+                // additional staff field with additional credits.
+                if (staffExtendedKey in program.extended) {
+                    people.concat(program?.extended[staffExtendedKey]?.split("\r\n"));
+                }
+            }
 
             x += "<credits>\n";
             let tag = "guest";
